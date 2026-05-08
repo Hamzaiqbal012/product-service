@@ -31,32 +31,4 @@ jobs:
   deploy:
     name: Deploy to Kubernetes
     needs: build-and-push         # Only runs if build succeeded
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'v1.29.0'
-
-    - name: Configure kubectl
-      run: |
-        mkdir -p ~/.kube
-        echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
-
-    - name: Update image in deployment
-      run: |
-        kubectl set image deployment/product-service \
-          product-service=${{ secrets.DOCKER_USERNAME }}/product-service:${{ github.sha }} \
-          -n product-app
-
-    - name: Wait for rollout to complete
-      run: |
-        kubectl rollout status deployment/product-service -n product-app --timeout=120s
-
-    - name: Verify deployment
-      run: |
-        kubectl get pods -n product-app
+    runs-on: self-hosted
