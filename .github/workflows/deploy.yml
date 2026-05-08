@@ -2,12 +2,12 @@ name: Build and Deploy to Kubernetes
 
 on:
   push:
-    branches: [ main ]           # Trigger on every push to main branch
+    branches: [ main ]
 
 jobs:
   build-and-push:
     name: Build Docker Image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout code
@@ -30,5 +30,34 @@ jobs:
 
   deploy:
     name: Deploy to Kubernetes
-    needs: build-and-push         # Only runs if build succeeded
+    needs: build-and-push
     runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Debug - confirm running on master VM
+      run: |
+        echo "Hostname: $(hostname)"
+        echo "User: $(whoami)"
+        echo "Kubectl version:"
+        kubectl version --client
+        echo "Nodes:"
+        kubectl --kubeconfig /home/ubuntu/.kube/config get nodes
+
+    - name: Update image in deployment
+      run: |
+        kubectl --kubeconfig /home/ubuntu/.kube/config \
+          set image deployment/product-service \
+          product-service=${{ secrets.DOCKER_USERNAME }}/product-service:${{ github.sha }} \
+          -n product-app
+
+    - name: Wait for rollout
+      run: |
+        kubectl --kubeconfig /home/ubuntu/.kube/config \
+          rollout status deployment/product-service -n product-app --timeout=120s
+
+    - name: Verify deployment
+      run: |
+        kubectl --kubeconfig /home/ubuntu/.kube/config get pods -n product-app
