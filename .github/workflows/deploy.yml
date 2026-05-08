@@ -50,3 +50,4 @@ jobs:
     - name: Verify
       run: |
         kubectl --kubeconfig /home/ubuntu/.kube/config get pods -n product-app
+#
