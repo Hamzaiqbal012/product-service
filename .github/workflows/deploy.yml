@@ -41,11 +41,12 @@ jobs:
       run: |
         echo "Hostname: $(hostname)"
         echo "User: $(whoami)"
-        echo "Kubectl version:"
-        kubectl version --client
-        echo "Nodes:"
-        kubectl --kubeconfig /home/ubuntu/.kube/config get nodes
-
+        echo "HOME: $HOME"
+        echo "--- Network test ---"
+        curl -sk https://192.168.169.10:6443/version || echo "CURL FAILED"
+        echo "--- Kubectl test ---"
+        kubectl --kubeconfig /home/ubuntu/.kube/config get nodes || echo "KUBECTL FAILED"
+        
     - name: Update image in deployment
       run: |
         kubectl --kubeconfig /home/ubuntu/.kube/config \
